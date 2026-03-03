@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  # Le "System" : le premier nœud du réseau
+  sadcoin-system:
+    build: .
+    container_name: sadcoin_system
+    environment:
+      - NODE_NAME=SYSTEM_NODE
+      - MY_PORT=5000
+      - PEERS= # Vide car c'est le premier
+    ports:
+      - "5000:5000"
+    networks:
+      - sadcoin-net
+
+  # Le Client 1
+  sadcoin-client-1:
+    build: .
+    container_name: sadcoin_client_1
+    environment:
+      - NODE_NAME=CLIENT_1
+      - MY_PORT=5000
+      - PEERS=sadcoin-system:5000
+    ports:
+      - "5001:5000"
+    depends_on:
+      - sadcoin-system
+    networks:
+      - sadcoin-net
+
+  # Le Client 2
+  sadcoin-client-2:
+    build: .
+    container_name: sadcoin_client_2
+    environment:
+      - NODE_NAME=CLIENT_2
+      - MY_PORT=5000
+      - PEERS=sadcoin-system:5000,sadcoin-client-1:5000
+    ports:
+      - "5002:5000"
+    depends_on:
+      - sadcoin-client-1
+    networks:
+      - sadcoin-net
+
+networks:
+  sadcoin-net:
+    driver: bridge

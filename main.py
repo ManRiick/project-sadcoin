@@ -1,16 +1,19 @@
-# This is a sample Python script.
-
-# Press Ctrl+F5 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+import os
+import time
 
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press F9 to toggle the breakpoint.
+def main():
+    node_name = os.getenv("NODE_NAME", "Unknown")
+    print(f"--- [SADCOIN] Démarrage du nœud : {node_name} ---")
+
+    # Ici, plus tard, tu appelleras ton moteur blockchain
+    # from src.core.blockchain import Blockchain
+    # blockchain = Blockchain()
+
+    while True:
+        print(f"Le nœud {node_name} est en attente de connexions P2P...")
+        time.sleep(10)  # Simule une boucle d'exécution
 
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+if __name__ == "__main__":
+    main()
