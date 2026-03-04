@@ -1,7 +1,8 @@
 from ecdsa import SigningKey, SECP256k1
 import hashlib
 
-
+def verify_signature(self, public_key, signature, data):
+    return public_key.verify(bytes.fromhex(signature), data.encode())
 class Wallet:
     def __init__(self):
         # Générer une clé privée (la signature)
@@ -17,3 +18,7 @@ class Wallet:
     def sign_transaction(self, data: str) -> str:
         # Signer des données avec la clé privée
         return self._private_key.sign(data.encode()).hex()
+
+
+def verify_signature(self, public_key, signature, data):
+    return public_key.verify(bytes.fromhex(signature), data.encode())
