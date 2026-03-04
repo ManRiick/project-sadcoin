@@ -1,6 +1,8 @@
 import os
 import threading
 import time
+
+from src.core.blockchain import Blockchain
 from src.crypto.wallet import Wallet
 from src.p2p.node import P2PNode
 
@@ -9,6 +11,10 @@ def main():
     node_name = os.getenv("NODE_NAME", "Unknown")
     my_port = int(os.getenv("MY_PORT", 5000))
     peers_str = os.getenv("PEERS", "")
+
+    # Initialisation
+    my_blockchain = Blockchain()
+    node = P2PNode(blockchain=my_blockchain, port=my_port)  # <-- Changement ici
 
     # Initialisation du Wallet
     wallet = Wallet()
