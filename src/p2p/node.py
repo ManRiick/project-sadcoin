@@ -4,10 +4,21 @@ import json
 
 
 class P2PNode:
-    def __init__(self, host='0.0.0.0', port=5000):
+    def __init__(self, blockchain, host='0.0.0.0', port=5000):
+        self.blockchain = blockchain
         self.host = host
         self.port = port
-        self.peers = []  # Liste des connexions actives
+        self.peers = []
+
+    def connect_to_peer(self, host, port):
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.connect((host, port))
+            self.peers.append(s)
+            threading.Thread(target=self.handle_client, args=(s,), daemon=True).start()
+            print(f"[P2P] Connecté au pair {host}:{port}")
+        except Exception as e:
+            print(f"[P2P] Erreur de connexion : {e}")
 
     def start_server(self):
         server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

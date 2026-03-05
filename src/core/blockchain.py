@@ -19,8 +19,9 @@ class Blockchain:
             return True
         return False
 
+    # Modifie ces deux méthodes dans Blockchain
+
     def mine(self):
-        """Transforme la mempool en un nouveau bloc."""
         if not self.mempool:
             return None
 
@@ -30,41 +31,54 @@ class Blockchain:
             "timestamp": time.time(),
             "transactions": self.mempool,
             "prev_hash": last_block["hash"],
-            "nonce": 0
+            "nonce": 0,
+            "hash": None  # On initialise à None
         }
 
-        # --- Proof of Work ---
         while True:
-            block_string = json.dumps(new_block, sort_keys=True).encode()
-            new_block["hash"] = hashlib.sha256(block_string).hexdigest()
+            # On crée une copie pour le calcul sans le champ hash
+            calc_block = new_block.copy()
+            calc_block.pop("hash")
 
-            # Vérification de la difficulté (ex: commence par "0000")
-            if new_block["hash"][:self.difficulty] == "0" * self.difficulty:
+            block_string = json.dumps(calc_block, sort_keys=True).encode()
+            current_hash = hashlib.sha256(block_string).hexdigest()
+
+            if current_hash[:self.difficulty] == "0" * self.difficulty:
+                new_block["hash"] = current_hash  # On stocke le hash gagnant
                 break
             new_block["nonce"] += 1
 
         self.chain.append(new_block)
-        self.mempool = []  # On vide la mempool après le minage
+        self.mempool = []
         return new_block
 
     def validate_block(self, block):
-        """Vérifie si un bloc reçu est valide."""
         last_block = self.chain[-1]
-
-        # 1. Vérifier le lien avec le précédent (La continuité)
         if block["prev_hash"] != last_block["hash"]:
             return False
 
-        # 2. Vérifier le hash (Le PoW)
-        # On recalcule le hash du bloc reçu pour voir s'il correspond aux critères
-        block_string = json.dumps(block, sort_keys=True).encode()
+        # Recalculer pour vérifier le PoW
+        check_block = block.copy()
+        received_hash = check_block.pop("hash")  # On extrait le hash pour vérifier le reste
+
+        block_string = json.dumps(check_block, sort_keys=True).encode()
         calculated_hash = hashlib.sha256(block_string).hexdigest()
 
-        # Le hash doit commencer par tes zéros (difficulté)
-        if calculated_hash[:self.difficulty] != "0" * self.difficulty:
+        return calculated_hash == received_hash and calculated_hash[:self.difficulty] == "0" * self.difficulty
+
+    def validate_block(self, block):
+        last_block = self.chain[-1]
+        if block["prev_hash"] != last_block["hash"]:
             return False
 
-        return True
+        # Créer une copie pour ne pas modifier l'original
+        temp_block = block.copy()
+        received_hash = temp_block.pop("hash")  # On retire le hash pour recalculer
+
+        block_string = json.dumps(temp_block, sort_keys=True).encode()
+        calculated_hash = hashlib.sha256(block_string).hexdigest()
+
+        return calculated_hash == received_hash and calculated_hash[:self.difficulty] == "0" * self.difficulty
 
     def integrate_block(self, block):
         """Ajoute le bloc à la chaîne et vide la mempool locale."""

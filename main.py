@@ -22,7 +22,6 @@ def main():
     print(f"--- [WALLET] Adresse générée : {wallet.get_address()[:20]}... ---")
 
     # 2. Serveur P2P
-    node = P2PNode(port=my_port)
     server_thread = threading.Thread(target=node.start_server, daemon=True)
     server_thread.start()
 
