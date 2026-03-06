@@ -5,6 +5,7 @@ import time
 from src.core.blockchain import Blockchain
 from src.crypto.wallet import Wallet
 from src.p2p.node import P2PNode
+from src.api.app import run_api
 
 def main():
     # 1. Identité du nœud
@@ -23,6 +24,7 @@ def main():
 
     # 2. Serveur P2P
     server_thread = threading.Thread(target=node.start_server, daemon=True)
+    threading.Thread(target=run_api, args=(node,), daemon=True).start()
     server_thread.start()
 
     # 3. Connexion au réseau (Test Ultime)

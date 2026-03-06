@@ -11,5 +11,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # On copie TOUT le code d'abord
 COPY . .
 
+RUN pytest tests/
+
 EXPOSE 5000
 CMD ["python", "main.py"]

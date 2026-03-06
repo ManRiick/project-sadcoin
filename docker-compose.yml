@@ -8,9 +8,9 @@ services:
     environment:
       - NODE_NAME=SYSTEM_NODE
       - MY_PORT=5000
-      - PEERS= # Vide car c'est le premier
+      - PEERS=
     ports:
-      - "5000:5000"
+      - "8080:8080"
     networks:
       - sadcoin-net
 
@@ -23,7 +23,7 @@ services:
       - MY_PORT=5000
       - PEERS=sadcoin-system:5000
     ports:
-      - "5001:5000"
+      - "8081:8080"
     depends_on:
       - sadcoin-system
     networks:
@@ -38,7 +38,7 @@ services:
       - MY_PORT=5000
       - PEERS=sadcoin-system:5000,sadcoin-client-1:5000
     ports:
-      - "5002:5000"
+      - "8082:8080"
     depends_on:
       - sadcoin-client-1
     networks:

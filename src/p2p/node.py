@@ -59,21 +59,24 @@ class P2PNode:
         conn.close()
 
     def handle_transaction(self, data):
-        # 1. On recrée l'objet transaction à partir du dictionnaire reçu
-        from src.core.transaction import Transaction
-        tx = Transaction(data['sender'], data['receiver'], data['amount'], data['signature'])
+        from src.core.transaction import Transaction  # Import local pour éviter les imports circulaires
 
-        # 2. On l'ajoute à la mempool de la blockchain locale
+        # On vérifie si on n'a pas déjà cette transaction pour éviter de boucler à l'infini
+        # (Simple check : si elle est déjà dans la mempool, on ne fait rien)
+        if data in self.blockchain.mempool:
+            return
+
+        tx = Transaction(
+            data['sender'],
+            data['receiver'],
+            data['amount'],
+            data['signature']
+        )
+
         if self.blockchain.add_transaction(tx):
-            print(f"[P2P] Transaction reçue et validée : {data['amount']} coins")
-        else:
-            print("[P2P] Transaction invalide reçue !")
-
-    def __init__(self, blockchain, host='0.0.0.0', port=5000):
-        self.blockchain = blockchain  # <--- On injecte la blockchain ici
-        self.host = host
-        self.port = port
-        self.peers = []
+            print(f"[P2P] Transaction relayée : {data['amount']} SAD")
+            # On ne broadcast QUE si c'est une nouvelle transaction pour nous
+            self.broadcast("NEW_TRANSACTION", data)
 
     def broadcast(self, message_type, data):
         """Envoie un message à tous les pairs connectés."""

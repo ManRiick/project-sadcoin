@@ -1,0 +1,220 @@
+<!doctype html>
+<html>
+  <head>
+    <title>SadCoin Wallet</title>
+
+    <style>
+      body {
+        font-family: Arial;
+        background: #121212;
+        color: white;
+        padding: 30px;
+      }
+
+      h1 {
+        color: #00ff9c;
+      }
+
+      .card {
+        background: #1e1e1e;
+        padding: 20px;
+        margin-bottom: 20px;
+        border-radius: 8px;
+      }
+
+      input {
+        padding: 10px;
+        margin: 5px;
+        width: 300px;
+        border-radius: 5px;
+        border: none;
+      }
+
+      button {
+        padding: 10px 20px;
+        margin-top: 10px;
+        background: #00ff9c;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+
+      textarea {
+        width: 100%;
+        padding: 10px;
+        background: #2a2a2a;
+        color: white;
+        border: none;
+        border-radius: 5px;
+      }
+
+      .block {
+        background: #2a2a2a;
+        padding: 10px;
+        margin-top: 10px;
+        border-radius: 5px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>SadCoin Wallet</h1>
+
+    <div class="card">
+      <h3>Wallet</h3>
+
+      <button onclick="createWallet()">Créer wallet</button>
+
+      <p>Adresse :</p>
+
+      <textarea id="address" rows="2"></textarea>
+    </div>
+
+    <div class="card">
+      <h3>Envoyer transaction</h3>
+
+      <input id="receiver" placeholder="Adresse destinataire" />
+
+      <input id="amount" type="number" placeholder="Montant" />
+
+      <br />
+
+      <button onclick="sendTx()">Envoyer</button>
+    </div>
+
+    <div class="card">
+      <button onclick="mine()">Miner bloc</button>
+    </div>
+
+    <div class="card">
+      <h3>Mempool</h3>
+
+      <div id="mempool"></div>
+    </div>
+
+    <div class="card">
+      <h3>Blockchain</h3>
+
+      <div id="blockchain"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/elliptic/6.5.4/elliptic.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+
+    <script>
+      const ec = new elliptic.ec("secp256k1");
+
+      let keyPair;
+      let publicKey;
+      let privateKey;
+
+      function createWallet() {
+        keyPair = ec.genKeyPair();
+
+        privateKey = keyPair.getPrivate("hex");
+
+        // enlever le prefixe 04
+        publicKey = keyPair.getPublic("hex").slice(2);
+
+        document.getElementById("address").value = publicKey;
+
+        localStorage.setItem("sad_pub", publicKey);
+        localStorage.setItem("sad_priv", privateKey);
+
+      }
+
+      async function sendTx() {
+        const receiver = document.getElementById("receiver").value;
+        const amount = parseInt(document.getElementById("amount").value);
+        const sender = localStorage.getItem("sad_pub");
+        const priv = localStorage.getItem("sad_priv");
+
+        if (!priv) {
+          alert("Créez d'abord un wallet");
+          return;
+        }
+
+        // 1. Créer le message exact (concaténation simple)
+        const message = sender + receiver + amount;
+
+        // 2. Calculer le hash SHA256 du message (comme le fera Python en interne)
+        const msgHash = CryptoJS.SHA256(message).toString();
+
+        // 3. Signer le hash
+        const key = ec.keyFromPrivate(priv);
+        const signature = key.sign(msgHash).toDER("hex");
+
+        const tx = {
+          sender: sender,
+          receiver: receiver,
+          amount: amount,
+          signature: signature,
+        };
+
+        const res = await fetch("/send", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(tx),
+        });
+
+        const data = await res.json();
+        alert(JSON.stringify(data));
+      }
+
+      // Fonction pour récupérer les données du serveur et mettre à jour l'affichage
+      async function updateUI() {
+        // 1. Récupérer la Mempool
+        const resMempool = await fetch("/mempool");
+        const dataMempool = await resMempool.json();
+        const mempoolDiv = document.getElementById("mempool");
+
+        mempoolDiv.innerHTML = dataMempool.mempool
+          .map(
+            (tx) => `
+        <div class="block">
+            <b>De:</b> ${tx.sender.slice(0, 10)}... <br>
+            <b>À:</b> ${tx.receiver.slice(0, 10)}... <br>
+            <b>Montant:</b> ${tx.amount} SAD
+        </div>
+    `,
+          )
+          .join("");
+
+        // 2. Récupérer la Blockchain
+        const resChain = await fetch("/chain");
+        const dataChain = await resChain.json();
+        const chainDiv = document.getElementById("blockchain");
+
+        chainDiv.innerHTML = dataChain.chain
+          .map(
+            (block) => `
+        <div class="block" style="border-left: 4px solid #00ff9c">
+            <b>BLOC #${block.index}</b><br>
+            <small>Hash: ${block.hash ? block.hash.slice(0, 20) : "En cours"}...</small><br>
+            <b>Transactions:</b> ${block.transactions.length}
+        </div>
+    `,
+          )
+          .reverse()
+          .join(" ⬇️ "); // Les plus récents en haut
+      }
+
+      // Fonction pour miner un bloc
+      async function mine() {
+        const res = await fetch("/mine");
+        const data = await res.json();
+
+        if (res.ok) {
+          alert("Bloc miné avec succès !");
+          updateUI(); // On rafraîchit l'affichage
+        } else {
+          alert("Erreur: " + data.message);
+        }
+      }
+
+      // Rafraîchir l'interface toutes les 3 secondes automatiquement
+      setInterval(updateUI, 3000);
+      updateUI(); // Premier appel au chargement
+    </script>
+  </body>
+</html>
