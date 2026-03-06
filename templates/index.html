@@ -158,7 +158,6 @@
         });
 
         const data = await res.json();
-        alert(JSON.stringify(data));
       }
 
       // Fonction pour récupérer les données du serveur et mettre à jour l'affichage
@@ -205,7 +204,6 @@
         const data = await res.json();
 
         if (res.ok) {
-          alert("Bloc miné avec succès !");
           updateUI(); // On rafraîchit l'affichage
         } else {
           alert("Erreur: " + data.message);

@@ -46,9 +46,10 @@ def send_transaction():
 
     # Attempt to add the transaction to the local mempool (includes signature check)
     if node_instance.blockchain.add_transaction(tx):
+        node_instance.broadcast("NEW_TRANSACTION", tx.to_dict())
         return jsonify({"status": "success"})
     else:
-        return jsonify({"status": "error", "message": "Invalid transaction"}), 400
+        return jsonify({"status": "error", "message": "Transaction invalide"}), 400
 
 @app.route('/chain', methods=['GET'])
 def get_chain():
